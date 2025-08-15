@@ -1,0 +1,32 @@
+The test process for SQLSERVER
+
+See also Changes_Made_to_Support_Sql_Server.md
+
+note: JDBC driver is under lib/sqlserver/*
+
+#### **IMPORTANT:**
+Change database isolation level to 'read committed snapshot', or else there'll be deadlocks (may be bugs)(or maybe due to sqlserver might upgrade lock even using UPDLOCK or ROWLOCK? based on many posts on the Internet), see Changes_Made_to_Support_Sql_Server.md for detail.
+
+#### Usage:
+
+##### (optional) delete exist tables for a fresh start
+./runSQL.sh props.sqlserver sql.sqlserver/tableDrops.sql
+
+##### Create the tables
+./runSQL.sh props.sqlserver sql.sqlserver/tableCreates.sql
+
+##### (optional) Create some Index if you want
+./runSQL.sh props.sqlserver sql.sqlserver/\<YourIndex\>.sql
+
+##### don't forget to change to read_committed_snapshot, or else there'll be deadlocks 
+alter database tpcc set allow_snapshot_isolation on;
+alter database tpcc set read_committed_snapshot on;
+
+##### (optional) Change recovery mode to SIMPLE (try it if encounter ` ERROR: The transaction log for database 'tpcc' is full due to 'LOG_BACKUP' and the holdup lsn is (881:820:10).` )
+ALTER DATABASE tpcc SET RECOVERY SIMPLE;
+
+##### Import Data
+./runLoader.sh props.sqlserver
+
+##### Run the benchmark
+./runBenchmark.sh props.sqlserver

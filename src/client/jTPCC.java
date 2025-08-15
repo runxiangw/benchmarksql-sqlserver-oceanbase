@@ -124,6 +124,10 @@ public class jTPCC implements jTPCCConfig
 	    dbType = DB_POSTGRES;
 	else if (iDB.equals("mysql"))
 	    dbType = DB_MYSQL;
+	else if (iDB.equals("sqlserver"))
+		dbType = DB_SQLSERVER;
+	else if (iDB.equals("oceanbase"))
+		dbType = DB_OCEANBASE;
 	else
 	{
 	    log.error("unknown database type '" + iDB + "'");
@@ -477,6 +481,10 @@ public class jTPCC implements jTPCCConfig
 			Connection conn = null;
 			printMessage("Creating database connection for " + terminalName + "...");
 			conn = DriverManager.getConnection(database, dbProps);
+
+			// if (dbType == DB_SQLSERVER) {
+			// 	conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+			// }
 			conn.setAutoCommit(false);
 
 			jTPCCTerminal terminal = new jTPCCTerminal

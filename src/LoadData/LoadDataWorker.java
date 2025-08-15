@@ -16,6 +16,7 @@ public class LoadDataWorker implements Runnable
     private int                 worker;
     private Connection          dbConn;
     private jTPCCRandom         rnd;
+	private String 				db;
 
     private StringBuffer        sb;
     private Formatter           fmt;
@@ -55,11 +56,15 @@ public class LoadDataWorker implements Runnable
     private StringBuffer        sbNewOrder = null;
     private Formatter           fmtNewOrder = null;
 
-    LoadDataWorker(int worker, String csvNull, jTPCCRandom rnd)
+    LoadDataWorker(int worker, String csvNull, jTPCCRandom rnd, String db)
     {
 	this.worker             = worker;
 	this.csvNull            = csvNull;
 	this.rnd                = rnd;
+	// add dbType because in sqlserver bmsql_history.hist_id column is 'identity(1,1)', 
+	// which is not allow to set value explicitly 
+	// unless temporary 'SET IDENTITY_INSERT bmsql_history ON;' temporary before inserting.
+	this.db 				= db;
 
 	this.sb                 = new StringBuffer();
 	this.fmt                = new Formatter(sb);
@@ -87,12 +92,16 @@ public class LoadDataWorker implements Runnable
 	this.fmtNewOrder        = new Formatter(sbNewOrder);
     }
 
-    LoadDataWorker(int worker, Connection dbConn, jTPCCRandom rnd)
+    LoadDataWorker(int worker, Connection dbConn, jTPCCRandom rnd, String db)
 	throws SQLException
     {
 	this.worker     = worker;
 	this.dbConn     = dbConn;
 	this.rnd        = rnd;
+	// add dbType because in sqlserver bmsql_history.hist_id column is 'identity(1,1)', 
+	// which is not allow to set value explicitly 
+	// unless temporary 'SET IDENTITY_INSERT bmsql_history ON;' temporary before inserting.
+	this.db 		= db;
 
 	this.sb         = new StringBuffer();
 	this.fmt        = new Formatter(sb);
@@ -350,6 +359,14 @@ public class LoadDataWorker implements Runnable
     private void loadWarehouse(int w_id)
 	throws SQLException, IOException
     {
+
+	// if (db.equals("sqlserver")) {
+	// 	System.out.println("!!!!!SET IDENTITY_INSERT bmsql_history ON at the begining og loadWarehouse!!!!!\n");
+	// 	Statement stmt = dbConn.createStatement();
+	// 	stmt.execute("SET IDENTITY_INSERT bmsql_history ON");
+	// 	stmt.close();
+	// }
+
 	/*
 	 * Load the WAREHOUSE row.
 	 */
@@ -533,9 +550,19 @@ public class LoadDataWorker implements Runnable
 					stmtCustomer.clearBatch();
 					dbConn.commit();
 
+					if (db.equals("sqlserver")) {
+						Statement stmt = dbConn.createStatement();
+						stmt.execute("SET IDENTITY_INSERT bmsql_history ON");
+						stmt.close();
+					}
 					stmtHistory.executeBatch();
 					stmtHistory.clearBatch();
 					dbConn.commit();
+					if (db.equals("sqlserver")) {
+						Statement stmt = dbConn.createStatement();
+						stmt.execute("SET IDENTITY_INSERT bmsql_history OFF");
+						stmt.close();
+					}
 				}
 			}
 
@@ -641,9 +668,19 @@ public class LoadDataWorker implements Runnable
 		stmtCustomer.executeBatch();
 		stmtCustomer.clearBatch();
 		dbConn.commit();
+		if (db.equals("sqlserver")) {
+			Statement stmt = dbConn.createStatement();
+			stmt.execute("SET IDENTITY_INSERT bmsql_history ON");
+			stmt.close();
+		}
 		stmtHistory.executeBatch();
 		stmtHistory.clearBatch();
 		dbConn.commit();
+		if (db.equals("sqlserver")) {
+			Statement stmt = dbConn.createStatement();
+			stmt.execute("SET IDENTITY_INSERT bmsql_history OFF");
+			stmt.close();
+		}
 	    }
 
 	    /*

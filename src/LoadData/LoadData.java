@@ -16,6 +16,7 @@ public class LoadData
 {
     private static Properties   ini = new Properties();
     private static String       db;
+    private static String       dbName;
     private static Properties   dbProps;
     private static jTPCCRandom  rnd;
     private static String       fileLocation = null;
@@ -81,6 +82,7 @@ public class LoadData
 			       e.getMessage());
 	    System.exit(1);
 	}
+	dbName = iniGetString("db");
 	db = iniGetString("conn");
 	dbProps = new Properties();
 	dbProps.setProperty("user", iniGetString("user"));
@@ -148,10 +150,10 @@ public class LoadData
 		dbConn.setAutoCommit(false);
 		if (writeCSV)
 		    workers[i] = new LoadDataWorker(i, csvNullValue,
-							rnd.newRandom());
+							rnd.newRandom(), dbName);
 		else
 		    workers[i] = new LoadDataWorker(i, dbConn,
-							rnd.newRandom());
+							rnd.newRandom(), dbName);
 		workerThreads[i] = new Thread(workers[i]);
 		workerThreads[i].start();
 	    }
